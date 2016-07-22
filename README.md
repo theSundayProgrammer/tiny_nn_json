@@ -30,5 +30,10 @@ following C++ code
        
  where connection is a one dimensional array of size 6*16.
  
+ **How to Build**  
+ Build Jsoncpp library. tiny_cnn is a header only library. Then compile the files in the *src* folder. The data folder
+ contains both the mnist data files and the NN descriptor in JSON.
+ 
+ 
  
 

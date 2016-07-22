@@ -1,0 +1,69 @@
+// Configuration options
+{ "layers" :
+	[
+		{
+			// Default encoding for text
+			"type" : "Convolutional",
+			"param_type" : "tanh",
+			"width" : 32,
+			"height" : 32,
+			"window_size" : 5,
+			"out_channels" : 6,
+			"in_channels" : 1
+		},
+		{
+			// Default encoding for text
+			"type" : "AveragePooling",
+			"param_type" : "tanh",
+			"width" : 28,
+			"height" : 28,
+			"in_channels" : 6,
+			"sub_sample" : 2
+		},
+		{
+			// Default encoding for text
+			"type" : "Convolutional",
+			"param_type" : "tanh",
+			"width" : 14,
+			"height" : 14,
+			"window_size" : 5,
+			"out_channels" : 16,
+			"in_channels" : 6,
+			"connections" : [
+				1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1,
+				1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1,
+				1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1,
+				0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1,
+				0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1,
+				0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1
+				]
+		},
+		{
+			// Default encoding for text
+			"type" : "AveragePooling",
+			"param_type" : "tanh",
+			"width" : 10,
+			"height" : 10,
+			"in_channels" : 16,
+			"sub_sample" : 2
+		},
+		{
+			// Default encoding for text
+			"type" : "Convolutional",
+			"param_type" : "tanh",
+			"width" : 5,
+			"height" : 5,
+			"window_size" : 5,
+			"out_channels" : 120,
+			"in_channels" : 16,
+		}
+		{
+			// Default encoding for text
+			"type" : "FullyConnected",
+			"param_type" : "tanh",
+			"out_nodes" : 10,
+			"in_nodes" : 120
+		}
+
+	]
+}
