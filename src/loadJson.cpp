@@ -31,7 +31,7 @@
 using namespace tiny_cnn;
 using namespace tiny_cnn::activation;
 using namespace std;
-char* data_dir_path = "C:\\Users\\Chakra\\Projects\\tiny-cnn\\data";
+char* data_dir_path = "data";
 void load(const string& );
 void sample2_mlp();
 void sample3_dae();
