@@ -33,6 +33,21 @@ enum EParamTypes
   Softmax,
   EPNotFound
 };
+enum EOptimizerTypes
+{
+  Eadagrad,
+  ERMSprop,
+  Eadam,
+  Emomentum,
+  EONotFound
+};
+
+struct OptimizerXType
+{
+  string name;
+  EOptimizerTypes id;
+};
+
 
 struct LayerXType
 {
@@ -69,7 +84,7 @@ JSONCPP_STRING readInputTestFile(const char* path);
 
 ELayerTypes layer_supported(const std::string& type_);
 EParamTypes param_supported(const std::string& type_);
-
+EOptimizerTypes optimizer_supported(const std::string& type_);
 
 tiny_cnn::network<tiny_cnn::sequential> GenerateCode(string const& path);
 
@@ -274,9 +289,16 @@ void HandleFullyConnected(
 
 }
 
+std::unique_ptr<tiny_cnn::optimizer> Handleadagrad(Json::Value const& val)
+{
+  double alpha = val.get("alpha", 0.03).asDouble();
+  std::unique_ptr<tiny_cnn::optimizer> optimiser = make_unique<tiny_cnn::adagrad>();
+  tiny_cnn::adagrad& opt = static_cast<tiny_cnn::adagrad&>(*optimiser);
+  opt.alpha = alpha;
+  return optimiser;
+}
 
-
-tiny_cnn::network<tiny_cnn::sequential> MyCNN::GenerateCode(std::string const& path)
+void MyCNN::GenerateCode(std::string const& path)
 {
   int exitCode = 0;
   JSONCPP_STRING input = readInputTestFile(path.c_str());
@@ -320,11 +342,40 @@ tiny_cnn::network<tiny_cnn::sequential> MyCNN::GenerateCode(std::string const& p
         break;
       }
   }
-  return nn;
+  const Json::Value optimizer_node = root["optimizer"];
+  if (optimizer_node.empty())
+  {
+    throw std::runtime_error("No optimizer specified");
+  }
+  if (optimizer_node["type"].empty())
+  {
+    throw std::runtime_error("No optimizer type specified");
+  }
+  string const opt_type = optimizer_node["type"].asString();
+  switch (optimizer_supported(opt_type))
+  {
+  default:
+    throw std::runtime_error(opt_type + ":  optimizer not supported");
+    break;
+      case Eadagrad: 
+        optimizer = Handleadagrad(optimizer_node);
+        break;
+      case ERMSprop: 
+        throw not_implemented(opt_type);
+        break;
+      case Eadam: 
+        throw not_implemented(opt_type);
+        break;
+      case Emomentum: 
+        throw not_implemented(opt_type);
+        break;
+
+  }
 
 }
+
 ELayerTypes layer_supported(const std::string& type_)
-{
+ {
   const LayerXType supported[] = {
     { "convolutional", Convolutional },
     { "averagepooling",AveragePooling },
@@ -337,6 +388,24 @@ ELayerTypes layer_supported(const std::string& type_)
   }
   return ELayerTypes::ELNotFound;
 }
+
+
+EOptimizerTypes optimizer_supported(const std::string& type_)
+ {
+   const OptimizerXType supported[] = 
+   {
+     {"adagrad",Eadagrad},
+     {"RMSprop",ERMSprop },
+     {"adam",Eadam},
+    {"momentum",Emomentum}
+   };
+   std::string type(type_);
+   std::transform(type.begin(), type.end(), type.begin(), tolower);
+   for (auto item = begin(supported); item != end(supported); ++item) {
+     if (item->name == type) return item->id;
+   }
+   return EOptimizerTypes::EONotFound;
+ }
 
 EParamTypes param_supported(const std::string& type_) {
   const ParamXType supported[] =
@@ -362,3 +431,4 @@ EParamTypes param_supported(const std::string& type_) {
   return EParamTypes::EPNotFound;
 
 }
+
