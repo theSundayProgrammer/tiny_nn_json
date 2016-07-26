@@ -37,18 +37,16 @@ int main(int argc, char** argv) {
     cnn.GenerateCode(path + "/model.json");
     std::cout << "loaded model" << std::endl;
 
-    // load MNIST dataset
-    // load MNIST dataset
     std::vector<label_t>  test_labels;
     std::vector<vec_t>  test_images;
 
 
     parse_mnist_labels(path + "/t10k-labels.idx1-ubyte", &test_labels);
     parse_mnist_images(path + "/t10k-images.idx3-ubyte", &test_images, -1.0, 1.0, 2, 2);
+    cnn.LoadData(path + "/model.dat");
 
     // 
     std::cout << "start testing" << std::endl;
-    cnn.LoadData(path + "/model.dat");
     cnn.test(test_images, test_labels).print_detail(std::cout);
     std::cout << "end training." << std::endl;
   }
