@@ -17,19 +17,16 @@ enum ELayerTypes
   FullyConnected,
   ELNotFound
 };
-
+//ToDO Lrn
 enum EParamTypes
 {
-  Innerproduct,
-  Convolution,
-  Pooling,
-  Lrn,
-  Dropout,
+  pIdentity,
   Softmaxwithloss,
   Sigmoidcrossentropyloss,
   Relu,
   Sigmoid,
   Tanh,
+  Tan_hp1m2,
   Softmax,
   EPNotFound
 };
@@ -39,28 +36,9 @@ enum EOptimizerTypes
   ERMSprop,
   Eadam,
   Emomentum,
+  Egradient_descent,
   EONotFound
 };
-
-struct OptimizerXType
-{
-  string name;
-  EOptimizerTypes id;
-};
-
-
-struct LayerXType
-{
-  string name;
-  ELayerTypes id;
-};
-
-struct ParamXType
-{
-  string name;
-  EParamTypes id;
-};
-
 
 
 struct AverageParams
@@ -150,37 +128,63 @@ void HandleAveragePooling(
       throw not_implemented(nnType.asString());
       return;
       break;
-    case  EParamTypes::Innerproduct:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Convolution:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Pooling:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Lrn:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Dropout:
-      throw not_implemented(nnType.asString()); break;
+      //Todo: Change this cut and paste 
+    case  EParamTypes::pIdentity:
+      nn << average_pooling_layer<tiny_cnn::activation::identity>
+        (params.width, params.height, params.channels, params.sub_sample);
+     break;
+    case  EParamTypes::Softmax:
     case  EParamTypes::Softmaxwithloss:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Sigmoidcrossentropyloss:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Relu:
-      throw not_implemented(nnType.asString()); break;
+      nn << average_pooling_layer<tiny_cnn::activation::softmax>
+        (params.width, params.height, params.channels, params.sub_sample);
+      break;
     case  EParamTypes::Sigmoid:
-      throw not_implemented(nnType.asString()); break;
+    case  EParamTypes::Sigmoidcrossentropyloss:
+      nn << average_pooling_layer<tiny_cnn::activation::sigmoid>
+        (params.width, params.height, params.channels, params.sub_sample);
+      break;
+    case  EParamTypes::Relu:
+      nn << average_pooling_layer<tiny_cnn::activation::relu>
+        (params.width, params.height, params.channels, params.sub_sample);
+      break;
+    case Tan_hp1m2:
+      nn << average_pooling_layer<tiny_cnn::activation::tan_hp1m2>
+        (params.width, params.height, params.channels, params.sub_sample);
+      break;
     case  EParamTypes::Tanh:
       nn << average_pooling_layer<tiny_cnn::activation::tan_h>
         (params.width, params.height, params.channels, params.sub_sample);
       break;
-    case  EParamTypes::Softmax:
-      throw not_implemented(nnType.asString()); break;
     }
 
   }
 
 
 }
-
+template<class T>
+void assignConvolutionLayer(
+  Json::Value const& item,
+  tiny_cnn::network<tiny_cnn::sequential>& nn)
+{
+  Json::Value connections = item["connections"];
+  auto params = getConvolutionParams(item);
+  if (connections.empty())
+    nn << convolutional_layer<T>
+    (params.width, params.height, params.window_size,
+      params.in_channels, params.out_channels);
+  else
+  {
+    std::unique_ptr<bool[]> connection(new bool[connections.size()]);
+    for (size_t index = 0; index < connections.size(); ++index)
+    {
+      connection[index] = connections[(int)index].asBool();
+    }
+    nn << convolutional_layer<T> //tiny_cnn::activation::tan_h
+      (params.width, params.height, params.window_size,
+        params.in_channels, params.out_channels,
+        connection_table(*connection.get(), params.in_channels, params.out_channels));
+  }
+}
 void HandleConvolutional(
   Json::Value const& item,
   tiny_cnn::network<tiny_cnn::sequential>& nn)
@@ -188,58 +192,45 @@ void HandleConvolutional(
   Json::Value nnType = item["param_type"];
   if (!nnType.empty())
   {
-    ConvolutionParams params = getConvolutionParams(item);
     switch (param_supported(nnType.asString()))
     {
     default:
       std::runtime_error(std::string("Convolution Pooling Param type: " + nnType.asString() + " not supported "));
       return;
       break;
-    case  EParamTypes::Innerproduct:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Convolution:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Pooling:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Lrn:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Dropout:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Softmaxwithloss:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Sigmoidcrossentropyloss:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Relu:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Sigmoid:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Tanh:
-    {
-      Json::Value connections = item["connections"];
-      if (connections.empty())
-        nn << convolutional_layer<tiny_cnn::activation::tan_h>
-        (params.width, params.height, params.window_size,
-          params.in_channels, params.out_channels);
-      else
-      {
-        std::unique_ptr<bool[]> connection(new bool[connections.size()]);
-        for (size_t index = 0; index < connections.size(); ++index)
-        {
-          connection[index] = connections[(int)index].asBool();
-        }
-        nn << convolutional_layer<tiny_cnn::activation::tan_h>
-          (params.width, params.height, params.window_size,
-            params.in_channels, params.out_channels,
-            connection_table(*connection.get(), params.in_channels, params.out_channels));
-      }
-    }
+    case  EParamTypes::pIdentity:
+      assignConvolutionLayer<tiny_cnn::activation::identity>(item, nn);
       break;
     case  EParamTypes::Softmax:
-      throw not_implemented(nnType.asString()); break;
+    case  EParamTypes::Softmaxwithloss:
+      assignConvolutionLayer<tiny_cnn::activation::softmax>(item, nn);
+      break;
+    case  EParamTypes::Sigmoid:
+    case  EParamTypes::Sigmoidcrossentropyloss:
+      assignConvolutionLayer<tiny_cnn::activation::sigmoid>(item, nn);
+      break;
+    case  EParamTypes::Relu:
+      assignConvolutionLayer<tiny_cnn::activation::relu>(item, nn);
+      break;
+    case Tanh:
+      assignConvolutionLayer<tiny_cnn::activation::tan_h>(item, nn);
+      break;
+    case Tan_hp1m2:
+      assignConvolutionLayer<tiny_cnn::activation::tan_hp1m2>(item, nn);
+      break;
     }
 
   }
 
+
+}
+template<class T>
+void assignFullyConnected(
+  Json::Value const& item,
+  tiny_cnn::network<tiny_cnn::sequential>& nn)
+{
+  FullyConnectedParams params = getFullyConnectedParams(item);
+  nn << fully_connected_layer<T>   (params.in_nodes, params.out_nodes);
 
 }
 
@@ -250,38 +241,32 @@ void HandleFullyConnected(
   Json::Value nnType = item["param_type"];
   if (!nnType.empty())
   {
-    FullyConnectedParams params = getFullyConnectedParams(item);
 
     switch (param_supported(nnType.asString()))
     {
     default:
       std::runtime_error(std::string("Fully Connected Param type: ") + nnType.asString() + " not supported ");
       return;
-      break;
-    case  EParamTypes::Innerproduct:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Convolution:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Pooling:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Lrn:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Dropout:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Softmaxwithloss:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Sigmoidcrossentropyloss:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Relu:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Sigmoid:
-      throw not_implemented(nnType.asString()); break;
-    case  EParamTypes::Tanh:
-      nn << fully_connected_layer<tiny_cnn::activation::tan_h>
-        (params.in_nodes, params.out_nodes);
+    case  EParamTypes::pIdentity:
+      assignFullyConnected<tiny_cnn::activation::identity>(item, nn);
       break;
     case  EParamTypes::Softmax:
-      throw not_implemented(nnType.asString()); break;
+    case  EParamTypes::Softmaxwithloss:
+      assignFullyConnected<tiny_cnn::activation::softmax>(item, nn);
+      break;
+    case  EParamTypes::Sigmoid:
+    case  EParamTypes::Sigmoidcrossentropyloss:
+      assignFullyConnected<tiny_cnn::activation::sigmoid>(item, nn);
+      break;
+    case  EParamTypes::Relu:
+      assignFullyConnected<tiny_cnn::activation::relu>(item, nn);
+      break;
+    case Tanh:
+      assignFullyConnected<tiny_cnn::activation::tan_h>(item, nn);
+      break;
+    case Tan_hp1m2:
+      assignFullyConnected<tiny_cnn::activation::tan_hp1m2>(item, nn);
+      break;
     }
 
   }
@@ -298,7 +283,12 @@ void HandleFullyConnected(
 
   ELayerTypes layer_supported(const std::string& type_)
   {
-    const LayerXType supported[] = {
+
+    struct 
+    {
+      string name;
+      ELayerTypes id;
+    } supported[] = {
       { "convolutional", Convolutional },
       { "averagepooling",AveragePooling },
       { "fullyconnected", FullyConnected }
@@ -314,11 +304,17 @@ void HandleFullyConnected(
 
   EOptimizerTypes optimizer_supported(const std::string& type_)
   {
-    const OptimizerXType supported[] =
+
+    struct 
+    {
+      string name;
+      EOptimizerTypes id;
+    } supported[] =
     {
       { "adagrad",Eadagrad },
       { "RMSprop",ERMSprop },
       { "adam",Eadam },
+      {"gradient_descent",Egradient_descent},
       { "momentum",Emomentum }
     };
     std::string type(type_);
@@ -330,19 +326,19 @@ void HandleFullyConnected(
   }
 
   EParamTypes param_supported(const std::string& type_) {
-    const ParamXType supported[] =
+  struct 
     {
-      { "innerproduct", Innerproduct },
-      { "convolution",Convolution },
-      { "pooling",Pooling },
-      { "lrn",Lrn },
-      { "dropout",Dropout },
+      string name;
+      EParamTypes id;
+    }   const supported[] =
+    {
+      { "identity",pIdentity },
+      { "softmax",Softmax },
       { "softmaxwithloss",Softmaxwithloss },
+      { "sigmoid",Sigmoid },
       { "sigmoidcrossentropyloss",Sigmoidcrossentropyloss },
       { "relu",Relu },
-      { "sigmoid",Sigmoid },
-      { "tanh",Tanh },
-      { "softmax",Softmax }
+      { "tanh",Tanh }
     };
 
     std::string type(type_);
@@ -358,7 +354,26 @@ void HandleFullyConnected(
 
 namespace theSundayProgrammer
 {
+  ELossFn loss_function_supported(const std::string& type_) {
+    struct 
+    { 
+      ELossFn id;
+      string const& name; 
+    } supported[] =
+    {
+      { ELF_mse, "mse" },
+      { ELF_cross_entropy, "cross_entropy" },
+      { ELF_cross_entropy_multiclass, "cross_entropy_multiclass" }
+    };
 
+    std::string type(type_);
+    std::transform(type.begin(), type.end(), type.begin(), tolower);
+    for (auto item = begin(supported); item != end(supported); ++item) {
+      if (item->name == type) return item->id;
+    }
+    return ELF_not_found;
+
+  }
 
   void MyCNN::GenerateCode(std::string const& path)
   {
@@ -404,38 +419,43 @@ namespace theSundayProgrammer
           break;
         }
     }
-    const Json::Value optimizer_node = root["optimizer"];
-    if (optimizer_node.empty())
     {
-      //throw std::runtime_error("No optimizer specified");
-      return;
+      const Json::Value optimizer_node = root["optimizer"];
+      if (!optimizer_node.empty() && !optimizer_node["type"].empty())
+      {
+        string const opt_type = optimizer_node["type"].asString();
+        switch (optimizer_supported(opt_type))
+        {
+        default:
+          throw std::runtime_error(opt_type + ":  optimizer not supported");
+          break;
+        case Eadagrad:
+          optimizer = Handleadagrad(optimizer_node);
+          break;
+        case ERMSprop:
+          throw not_implemented(opt_type);
+          break;
+        case Eadam:
+          throw not_implemented(opt_type);
+          break;
+        case Emomentum:
+          throw not_implemented(opt_type);
+          break;
+        case Egradient_descent:
+          throw not_implemented(opt_type);
+          break;
+          
+        }
+      }
     }
-    if (optimizer_node["type"].empty())
     {
-      //throw std::runtime_error("No optimizer type specified");
-      return;
+      const Json::Value node = root["loss"];
+      if (!node.empty() && !node["type"].empty())
+      {
+        string const type = node["type"].asString();
+        this->lossFn = loss_function_supported(type);
+      }
     }
-    string const opt_type = optimizer_node["type"].asString();
-    switch (optimizer_supported(opt_type))
-    {
-    default:
-      throw std::runtime_error(opt_type + ":  optimizer not supported");
-      break;
-    case Eadagrad:
-      optimizer = Handleadagrad(optimizer_node);
-      break;
-    case ERMSprop:
-      throw not_implemented(opt_type);
-      break;
-    case Eadam:
-      throw not_implemented(opt_type);
-      break;
-    case Emomentum:
-      throw not_implemented(opt_type);
-      break;
-
-    }
-
   }
 
 

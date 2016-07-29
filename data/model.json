@@ -2,8 +2,13 @@
 {
   "layers": [
     {
-      // Default encoding for text
       "type": "Convolutional",
+      // supported params (makes sense only while training)
+      //  "identity",
+      //  "softmax",
+      //  "sigmoid", use with cross entropy loss function
+      //  "relu",
+      //  "tanh",
       "param_type": "tanh",
       "width": 32,
       "height": 32,
@@ -12,8 +17,15 @@
       "in_channels": 1
     },
     {
-      // Default encoding for text
       "type": "AveragePooling",
+
+      // supported params (makes sense only while training)
+      //  "identity",
+      //  "softmax",
+      //  "sigmoid", use with cross entropy loss function
+      //  "relu",
+      //  "tanh",
+      
       "param_type": "tanh",
       "width": 28,
       "height": 28,
@@ -21,7 +33,6 @@
       "sub_sample": 2
     },
     {
-      // Default encoding for text
       "type": "Convolutional",
       "param_type": "tanh",
       "width": 14,
@@ -30,12 +41,23 @@
       "out_channels": 16,
       "in_channels": 6,
       "connections": [
-         1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1,
-        1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1,
-        1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1,
-        0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1,
-        0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1,
-        0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1    ]
+        1, 0, 0, 0, 1, 1,
+        1, 0, 0, 1, 1, 1,
+        1, 0, 1, 1, 1, 1,
+        0, 0, 0, 1, 1, 1,
+        0, 0, 1, 1, 1, 1,
+        0, 1, 1, 1, 1, 0,
+        0, 0, 1, 1, 1, 0,
+        0, 1, 0, 1, 1, 1,
+        0, 1, 1, 1, 0, 0,
+        1, 1, 1, 1, 0, 0,
+        1, 0, 1, 1, 0, 0,
+        1, 1, 1, 0, 0, 1,
+        1, 1, 1, 0, 1, 1,
+        0, 1, 0, 0, 0, 1,
+        1, 1, 0, 0, 1, 1,
+        1, 1, 0, 1, 1, 1
+      ]
     },
     {
       // Default encoding for text
@@ -66,8 +88,21 @@
 
   ],
   "optimizer": {
+    //possible values are:
+    // adagrad,
+    // RMSProp,
+    // adam,
+    // gradient_descent
+    // momentum
     "type": "adagrad",
     //alhpa = 0.1 * sqrt(10)
-    "alpha" :  0.0316227766
+    "alpha": 0.0316227766
+  },
+  "loss": {
+  // possible values are
+  // mse
+  // cross_entropy
+  // cross_entropy_multiclasss
+    "type": "mse" 
   }
 }
