@@ -23,7 +23,7 @@
 #include <iostream>
 #include <memory>
 #include <tiny_cnn/tiny_cnn.h>
-#include "MyCnn.hpp"
+#include <jsonreader/MyCnn.hpp>
 using namespace tiny_cnn;
 using namespace tiny_cnn::activation;
 using namespace std;

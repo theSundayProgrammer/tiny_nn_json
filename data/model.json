@@ -17,6 +17,9 @@
       "in_channels": 1
     },
     {
+      // pooling can be
+      //   AveragePooling
+      //   MaxPooling
       "type": "AveragePooling",
 
       // supported params (makes sense only while training)
@@ -25,7 +28,7 @@
       //  "sigmoid", use with cross entropy loss function
       //  "relu",
       //  "tanh",
-      
+
       "param_type": "tanh",
       "width": 28,
       "height": 28,

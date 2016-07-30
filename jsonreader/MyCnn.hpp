@@ -64,4 +64,13 @@ namespace theSundayProgrammer
     lossFn(ELF_mse) {}
 
 }
+
+namespace std
+{
+  class not_implemented : public runtime_error
+  {
+  public:
+    not_implemented(string const& err) :runtime_error(err) {}
+  };
+}
 #endif
