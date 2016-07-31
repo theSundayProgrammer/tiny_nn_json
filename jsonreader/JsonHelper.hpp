@@ -6,7 +6,15 @@
 #include <json/json.h>
 namespace theSundayProgrammer
 {
-
+  enum EOptimizerTypes
+  {
+    Eadagrad,
+    ERMSprop,
+    Eadam,
+    Emomentum,
+    Egradient_descent,
+    EONotFound
+  };
   enum EParamTypes
   {
     pIdentity,
@@ -26,6 +34,15 @@ namespace theSundayProgrammer
     Json::Value const& item,
     tiny_cnn::network<tiny_cnn::sequential>& nn);
   void HandleAveragePooling(
+    Json::Value const& item,
+    tiny_cnn::network<tiny_cnn::sequential>& nn);
+  void HandleConvolutional(
+    Json::Value const& item,
+    tiny_cnn::network<tiny_cnn::sequential>& nn);
+  void HandleFullyConnected(
+    Json::Value const& item,
+    tiny_cnn::network<tiny_cnn::sequential>& nn);
+  void HandleLRN(
     Json::Value const& item,
     tiny_cnn::network<tiny_cnn::sequential>& nn);
 

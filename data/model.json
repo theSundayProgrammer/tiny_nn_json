@@ -3,7 +3,7 @@
   "layers": [
     {
       "type": "Convolutional",
-      // supported params (makes sense only while training)
+      // supported params 
       //  "identity",
       //  "softmax",
       //  "sigmoid", use with cross entropy loss function

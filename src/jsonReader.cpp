@@ -23,33 +23,8 @@ namespace theSundayProgrammer
     ELNotFound
   };
 
-  enum EOptimizerTypes
-  {
-    Eadagrad,
-    ERMSprop,
-    Eadam,
-    Emomentum,
-    Egradient_descent,
-    EONotFound
-  };
 
-  struct LRNParams
-  {
-    int width, height, local_size, channels;
-    double alpha, beta;
-  };
-
-  struct ConvolutionParams
-  {
-    int width, height, window_size, in_channels, out_channels;
-  };
-
-
-  struct FullyConnectedParams
-  {
-    int in_nodes, out_nodes;
-  };
-
+  
 
   JSONCPP_STRING readInputTestFile(const char* path);
 
@@ -68,201 +43,7 @@ namespace theSundayProgrammer
     return istr.str();
   }
 
-
-  FullyConnectedParams getFullyConnectedParams(Json::Value const& item)
-  {
-    FullyConnectedParams params;
-    params.in_nodes = item.get("in_nodes", 0).asInt();
-    params.out_nodes = item.get("out_nodes", 0).asInt();
-    return params;
-  }
-
-  LRNParams getLRNParams(Json::Value const& item)
-  {
-    LRNParams params;
-    params.width = item.get("width", 0).asInt();
-    params.height = item.get("height", 0).asInt();
-    params.channels = item.get("channels", 0).asInt();
-    params.local_size = item.get("local_size", 0).asInt();
-    params.alpha = item.get("alpha", 1.0).asDouble();
-    params.beta = item.get("beta", 5.0).asDouble();
-    return params;
-  }
-
-  ConvolutionParams getConvolutionParams(Json::Value const& item)
-  {
-    ConvolutionParams params;
-    params.width = item.get("width", 0).asInt();
-    params.height = item.get("height", 0).asInt();
-    params.in_channels = item.get("in_channels", 0).asInt();
-    params.out_channels = item.get("out_channels", 0).asInt();
-    params.window_size = item.get("window_size", 0).asInt();
-    return params;
-  }
-
-
-  template<class T>
-  void assignLRNLayer(
-    Json::Value const& item,
-    tiny_cnn::network<tiny_cnn::sequential>& nn)
-
-  {
-    LRNParams params = getLRNParams(item);
-    nn << lrn_layer<T>
-      (params.width, params.height, params.local_size, params.channels, params.alpha, params.beta);
-
-  }
-  template<class T>
-  void assignConvolutionLayer(
-    Json::Value const& item,
-    tiny_cnn::network<tiny_cnn::sequential>& nn)
-  {
-    Json::Value connections = item["connections"];
-    auto params = getConvolutionParams(item);
-    if (connections.empty())
-      nn << convolutional_layer<T>
-      (params.width, params.height, params.window_size,
-        params.in_channels, params.out_channels);
-    else
-    {
-      std::unique_ptr<bool[]> connection(new bool[connections.size()]);
-      for (size_t index = 0; index < connections.size(); ++index)
-      {
-        connection[index] = connections[(int)index].asBool();
-      }
-      nn << convolutional_layer<T> //tiny_cnn::activation::tan_h
-        (params.width, params.height, params.window_size,
-          params.in_channels, params.out_channels,
-          connection_table(*connection.get(), params.in_channels, params.out_channels));
-    }
-  }
-  void HandleConvolutional(
-    Json::Value const& item,
-    tiny_cnn::network<tiny_cnn::sequential>& nn)
-  {
-    Json::Value nnType = item["param_type"];
-    if (!nnType.empty())
-    {
-      switch (param_supported(nnType.asString()))
-      {
-      default:
-        std::runtime_error(std::string("Convolution Pooling Param type: " + nnType.asString() + " not supported "));
-        return;
-        break;
-      case  EParamTypes::pIdentity:
-        assignConvolutionLayer<tiny_cnn::activation::identity>(item, nn);
-        break;
-      case  EParamTypes::Softmax:
-      case  EParamTypes::Softmaxwithloss:
-        assignConvolutionLayer<tiny_cnn::activation::softmax>(item, nn);
-        break;
-      case  EParamTypes::Sigmoid:
-      case  EParamTypes::Sigmoidcrossentropyloss:
-        assignConvolutionLayer<tiny_cnn::activation::sigmoid>(item, nn);
-        break;
-      case  EParamTypes::Relu:
-        assignConvolutionLayer<tiny_cnn::activation::relu>(item, nn);
-        break;
-      case Tanh:
-        assignConvolutionLayer<tiny_cnn::activation::tan_h>(item, nn);
-        break;
-      case Tan_hp1m2:
-        assignConvolutionLayer<tiny_cnn::activation::tan_hp1m2>(item, nn);
-        break;
-      }
-
-    }
-
-
-  }
-
-  void HandleLRN(
-    Json::Value const& item,
-    tiny_cnn::network<tiny_cnn::sequential>& nn)
-  {
-    Json::Value nnType = item["param_type"];
-    if (!nnType.empty())
-    {
-      switch (param_supported(nnType.asString()))
-      {
-      default:
-        std::runtime_error(std::string("LRN Param type: " + nnType.asString() + " not supported "));
-        return;
-        break;
-      case  EParamTypes::pIdentity:
-        assignLRNLayer<tiny_cnn::activation::identity>(item, nn);
-        break;
-      case  EParamTypes::Softmax:
-      case  EParamTypes::Softmaxwithloss:
-        assignLRNLayer<tiny_cnn::activation::softmax>(item, nn);
-        break;
-      case  EParamTypes::Sigmoid:
-      case  EParamTypes::Sigmoidcrossentropyloss:
-        assignLRNLayer<tiny_cnn::activation::sigmoid>(item, nn);
-        break;
-      case  EParamTypes::Relu:
-        assignLRNLayer<tiny_cnn::activation::relu>(item, nn);
-        break;
-      case Tanh:
-        assignLRNLayer<tiny_cnn::activation::tan_h>(item, nn);
-        break;
-      case Tan_hp1m2:
-        assignLRNLayer<tiny_cnn::activation::tan_hp1m2>(item, nn);
-        break;
-      }
-
-    }
-
-
-  }
-  template<class T>
-  void assignFullyConnected(
-    Json::Value const& item,
-    tiny_cnn::network<tiny_cnn::sequential>& nn)
-  {
-    FullyConnectedParams params = getFullyConnectedParams(item);
-    nn << fully_connected_layer<T>(params.in_nodes, params.out_nodes);
-
-  }
-
-  void HandleFullyConnected(
-    Json::Value const& item,
-    tiny_cnn::network<tiny_cnn::sequential>& nn)
-  {
-    Json::Value nnType = item["param_type"];
-    if (!nnType.empty())
-    {
-
-      switch (param_supported(nnType.asString()))
-      {
-      default:
-        std::runtime_error(std::string("Fully Connected Param type: ") + nnType.asString() + " not supported ");
-        return;
-      case  EParamTypes::pIdentity:
-        assignFullyConnected<tiny_cnn::activation::identity>(item, nn);
-        break;
-      case  EParamTypes::Softmax:
-      case  EParamTypes::Softmaxwithloss:
-        assignFullyConnected<tiny_cnn::activation::softmax>(item, nn);
-        break;
-      case  EParamTypes::Sigmoid:
-      case  EParamTypes::Sigmoidcrossentropyloss:
-        assignFullyConnected<tiny_cnn::activation::sigmoid>(item, nn);
-        break;
-      case  EParamTypes::Relu:
-        assignFullyConnected<tiny_cnn::activation::relu>(item, nn);
-        break;
-      case Tanh:
-        assignFullyConnected<tiny_cnn::activation::tan_h>(item, nn);
-        break;
-      case Tan_hp1m2:
-        assignFullyConnected<tiny_cnn::activation::tan_hp1m2>(item, nn);
-        break;
-      }
-
-    }
-  }
-  std::unique_ptr<tiny_cnn::optimizer> Handleadagrad(Json::Value const& val)
+std::unique_ptr<tiny_cnn::optimizer> Handleadagrad(Json::Value const& val)
   {
     double alpha = val.get("alpha", 0.03).asDouble();
     std::unique_ptr<tiny_cnn::optimizer> optimiser = make_unique<tiny_cnn::adagrad>();
@@ -274,7 +55,6 @@ namespace theSundayProgrammer
 
   ELayerTypes layer_supported(const std::string& type_)
   {
-
     struct
     {
       string name;
@@ -283,6 +63,7 @@ namespace theSundayProgrammer
       { "convolutional", Convolutional },
       { "averagepooling",AveragePooling },
       { "maxpooling",MaxPooling },
+      { "lrn",LRN_layer },
       { "fullyconnected", FullyConnected }
     };
     std::string type(type_);
@@ -364,29 +145,10 @@ namespace theSundayProgrammer
     return ELF_not_found;
 
   }
-
-  void MyCNN::GenerateCode(std::string const& path)
+  void HandleLayers(
+    Json::Value const& plugins,
+    tiny_cnn::network<tiny_cnn::sequential>& nn)
   {
-    int exitCode = 0;
-    JSONCPP_STRING input = readInputTestFile(path.c_str());
-    if (input.empty())
-    {
-      throw std::runtime_error("Empty input file");
-    }
-
-    Json::Features mode = Json::Features::strictMode();
-    mode.allowComments_ = true;
-    Json::Value root;
-
-    Json::Reader reader(mode);
-    bool parsingSuccessful = reader.parse(input.data(), input.data() + input.size(), root);
-    if (!parsingSuccessful)
-    {
-      throw std::runtime_error(std::string("Failed to parse file: ") + reader.getFormattedErrorMessages());
-    }
-
-
-    const Json::Value plugins = root["layers"];
     // Iterate over the sequence elements.
     for (size_t index = 0; index < plugins.size(); ++index)
     {
@@ -415,6 +177,34 @@ namespace theSundayProgrammer
           break;
         }
     }
+
+  }
+
+
+  void MyCNN::GenerateCode(std::string const& path)
+  {
+    int exitCode = 0;
+    JSONCPP_STRING input = readInputTestFile(path.c_str());
+    if (input.empty())
+    {
+      throw std::runtime_error("Empty input file");
+    }
+
+    Json::Features mode = Json::Features::strictMode();
+    mode.allowComments_ = true;
+    Json::Value root;
+
+    Json::Reader reader(mode);
+    bool parsingSuccessful = reader.parse(input.data(), input.data() + input.size(), root);
+    if (!parsingSuccessful)
+    {
+      throw std::runtime_error(
+        std::string("Failed to parse file: ") + 
+        reader.getFormattedErrorMessages());
+    }
+
+    HandleLayers(root["layers"], this->nn);
+
     {
       const Json::Value optimizer_node = root["optimizer"];
       if (!optimizer_node.empty() && !optimizer_node["type"].empty())
