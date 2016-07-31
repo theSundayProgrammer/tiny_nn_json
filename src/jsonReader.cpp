@@ -181,6 +181,50 @@ std::unique_ptr<tiny_cnn::optimizer> Handleadagrad(Json::Value const& val)
   }
 
 
+  std::unique_ptr<tiny_cnn::optimizer>
+  HandleOptimizer(
+    Json::Value const&  optimizer_node )
+    {
+      if (!optimizer_node.empty() && !optimizer_node["type"].empty())
+      {
+        string const opt_type = optimizer_node["type"].asString();
+        switch (optimizer_supported(opt_type))
+        {
+        default:
+          throw std::runtime_error(opt_type + ":  optimizer not supported");
+          break;
+        case Eadagrad:
+          return Handleadagrad(optimizer_node);
+          break;
+        case ERMSprop:
+          throw not_implemented(opt_type);
+          break;
+        case Eadam:
+          throw not_implemented(opt_type);
+          break;
+        case Emomentum:
+          throw not_implemented(opt_type);
+          break;
+        case Egradient_descent:
+          throw not_implemented(opt_type);
+          break;
+
+        }
+      }
+      return std::unique_ptr<tiny_cnn::optimizer>();
+    }
+  ELossFn HandleLossFn(const Json::Value& node)
+  {
+    if (!node.empty() && !node["type"].empty())
+    {
+      return loss_function_supported(node["type"].asString());
+    }
+    else
+    {
+      return ELossFn::ELF_mse;
+    }
+  }
+
   void MyCNN::GenerateCode(std::string const& path)
   {
     int exitCode = 0;
@@ -199,49 +243,13 @@ std::unique_ptr<tiny_cnn::optimizer> Handleadagrad(Json::Value const& val)
     if (!parsingSuccessful)
     {
       throw std::runtime_error(
-        std::string("Failed to parse file: ") + 
+        std::string("Failed to parse file: ") +
         reader.getFormattedErrorMessages());
     }
 
     HandleLayers(root["layers"], this->nn);
-
-    {
-      const Json::Value optimizer_node = root["optimizer"];
-      if (!optimizer_node.empty() && !optimizer_node["type"].empty())
-      {
-        string const opt_type = optimizer_node["type"].asString();
-        switch (optimizer_supported(opt_type))
-        {
-        default:
-          throw std::runtime_error(opt_type + ":  optimizer not supported");
-          break;
-        case Eadagrad:
-          optimizer = Handleadagrad(optimizer_node);
-          break;
-        case ERMSprop:
-          throw not_implemented(opt_type);
-          break;
-        case Eadam:
-          throw not_implemented(opt_type);
-          break;
-        case Emomentum:
-          throw not_implemented(opt_type);
-          break;
-        case Egradient_descent:
-          throw not_implemented(opt_type);
-          break;
-
-        }
-      }
-    }
-    {
-      const Json::Value node = root["loss"];
-      if (!node.empty() && !node["type"].empty())
-      {
-        string const type = node["type"].asString();
-        this->lossFn = loss_function_supported(type);
-      }
-    }
+    this->optimizer = HandleOptimizer(root["optimizer"]);
+    this->lossFn = HandleLossFn(root["loss"]);
   }
 
 
