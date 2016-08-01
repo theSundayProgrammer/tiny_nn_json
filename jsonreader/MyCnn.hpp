@@ -1,6 +1,7 @@
 #pragma once
 #ifndef CNN_E692F2A00EDC4069939ECF54036096EB
 #define CNN_E692F2A00EDC4069939ECF54036096EB
+#include <json/json.h>
 namespace theSundayProgrammer
 {
   enum ELossFn
@@ -23,7 +24,7 @@ namespace theSundayProgrammer
 
     void SaveData(std::string const& path) const;
 
-    void GenerateCode(std::string const& path);
+    void GenerateCode(Json::Value const&);
 
     template <class T, class S>
     void train(std::vector<tiny_cnn::label_t> const& train_labels,

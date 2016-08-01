@@ -2,8 +2,6 @@
 
 
 #include <algorithm> // sort
-#include <fstream>
-#include <sstream>
 #include <memory>
 #include <tiny_cnn/tiny_cnn.h>
 #include <jsonreader/MyCnn.hpp>
@@ -34,14 +32,6 @@ namespace theSundayProgrammer
   tiny_cnn::network<tiny_cnn::sequential> GenerateCode(string const& path);
 
 
-
-  JSONCPP_STRING readInputTestFile(const char* path)
-  {
-    std::ifstream ifs(path);
-    std::stringstream istr;
-    istr << ifs.rdbuf();
-    return istr.str();
-  }
 
 std::unique_ptr<tiny_cnn::optimizer> Handleadagrad(Json::Value const& val)
   {
@@ -225,28 +215,9 @@ std::unique_ptr<tiny_cnn::optimizer> Handleadagrad(Json::Value const& val)
     }
   }
 
-  void MyCNN::GenerateCode(std::string const& path)
+  void MyCNN::GenerateCode(Json::Value const& root)
   {
-    int exitCode = 0;
-    JSONCPP_STRING input = readInputTestFile(path.c_str());
-    if (input.empty())
-    {
-      throw std::runtime_error("Empty input file");
-    }
-
-    Json::Features mode = Json::Features::strictMode();
-    mode.allowComments_ = true;
-    Json::Value root;
-
-    Json::Reader reader(mode);
-    bool parsingSuccessful = reader.parse(input.data(), input.data() + input.size(), root);
-    if (!parsingSuccessful)
-    {
-      throw std::runtime_error(
-        std::string("Failed to parse file: ") +
-        reader.getFormattedErrorMessages());
-    }
-
+    
     HandleLayers(root["layers"], this->nn);
     this->optimizer = HandleOptimizer(root["optimizer"]);
     this->lossFn = HandleLossFn(root["loss"]);

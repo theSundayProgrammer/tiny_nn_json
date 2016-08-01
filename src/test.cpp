@@ -24,17 +24,55 @@
 #include <memory>
 #include <tiny_cnn/tiny_cnn.h>
 #include <jsonreader/MyCnn.hpp>
+#include <json/json.h>
+#include <fstream>
+#include <sstream>
+
 using namespace tiny_cnn;
 using namespace tiny_cnn::activation;
 using namespace std;
 namespace tsp = theSundayProgrammer;
 char* data_dir_path = "data";
+
+
+JSONCPP_STRING readInputTestFile(const char* path)
+{
+  std::ifstream ifs(path);
+  std::stringstream istr;
+  istr << ifs.rdbuf();
+  return istr.str();
+}
+Json::Value getDOM(std::string const& path)
+{
+  JSONCPP_STRING input = readInputTestFile(path.c_str());
+  if (input.empty())
+  {
+    throw std::runtime_error("Empty input file");
+  }
+
+  Json::Features mode = Json::Features::strictMode();
+  mode.allowComments_ = true;
+  Json::Value root;
+
+  Json::Reader reader(mode);
+  bool parsingSuccessful = reader.parse(input.data(), input.data() + input.size(), root);
+  if (!parsingSuccessful)
+  {
+    throw std::runtime_error(
+      std::string("Failed to parse file: ") +
+      reader.getFormattedErrorMessages());
+  }
+  return root;
+}
 int main(int argc, char** argv) {
   try
   {
     std::string const  path = argc == 2 ? argv[1] : data_dir_path;
+
+
     tsp::MyCNN cnn;
-    cnn.GenerateCode(path + "/model.json");
+    Json::Value root = getDOM(path + "/model.json");
+    cnn.GenerateCode(root);
     std::cout << "loaded model" << std::endl;
 
     std::vector<label_t>  test_labels;
