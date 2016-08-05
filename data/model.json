@@ -91,14 +91,14 @@
 
   ],
   "optimizer": {
-    //possible values are:
-    // adagrad,
-    // RMSProp,
-    // adam,
-    // gradient_descent
-    // momentum
+    //possible values for type are:
+    // adagrad; alpha=0.3 (default)
+    // RMSProp; alpha=0.0001, mu=0.99
+    // adam,alpha=0.001;
+    //      decay b1 = 0.9, decay b2 = 0.999, b1_t=0.9, b2_t=0.999
+    // gradient_descent; alpa = 0.01, lambda=0.0
+    // momentum; alpha=0.01, lambda=0.0, mu=0.9
     "type": "adagrad",
-    //alhpa = 0.1 * sqrt(10)
     "alpha": 0.0316227766
   },
   "loss": {

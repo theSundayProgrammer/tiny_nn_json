@@ -24,7 +24,7 @@
 #include <memory>
 #include <tiny_cnn/tiny_cnn.h>
 #include <jsonreader/MyCnn.hpp>
-#include <json/json.h>
+#include <json/reader.h>
 #include <fstream>
 #include <sstream>
 
@@ -70,9 +70,9 @@ int main(int argc, char** argv) {
     std::string const  path = argc == 2 ? argv[1] : data_dir_path;
 
 
-    tsp::MyCNN cnn;
+    tsp::CNN cnn;
     Json::Value root = getDOM(path + "/model.json");
-    cnn.GenerateCode(root);
+    cnn.ConstructNN(root);
     std::cout << "loaded model" << std::endl;
 
     std::vector<label_t>  test_labels;
@@ -94,4 +94,43 @@ int main(int argc, char** argv) {
   }
 }
 
+namespace theSundayProgrammer
+{
+  void HandleLayers(
+    Json::Value const& plugins,
+    tiny_cnn::network<tiny_cnn::sequential>& nn);
 
+  std::unique_ptr<tiny_cnn::optimizer>
+    HandleOptimizer(
+      Json::Value const&  optimizer_node);
+
+  ELossFn HandleLossFn(const Json::Value& node);
+
+  void CNN::ConstructNN(Json::Value const& root)
+  {
+
+    HandleLayers(root["layers"], this->nn);
+    this->optimizer = HandleOptimizer(root["optimizer"]);
+    this->lossFn = HandleLossFn(root["loss"]);
+  }
+
+
+  tiny_cnn::result CNN::test(std::vector<vec_t>&  test_images, std::vector<label_t>&  test_labels)
+  {
+    return nn.test(test_images, test_labels);
+  }
+
+  void CNN::LoadData(std::string const& path)
+  {
+    std::ifstream ifs(path);
+    ifs >> nn;
+  }
+
+  void CNN::SaveData(std::string const& path) const
+  {
+    std::ofstream ofs(path);
+    ofs << nn;
+
+  }
+
+}
