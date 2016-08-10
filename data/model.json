@@ -95,9 +95,9 @@
     // adagrad; alpha=0.3 (default)
     // RMSProp; alpha=0.0001, mu=0.99
     // adam,alpha=0.001;
-    //      decay b1 = 0.9, decay b2 = 0.999, b1_t=0.9, b2_t=0.999
+    //      decay_b1 = 0.9, decay_b2 = 0.999, b1_t=0.9, b2_t=0.999
     // gradient_descent; alpa = 0.01, lambda=0.0
-    // momentum; alpha=0.01, lambda=0.0, mu=0.9
+    // momentum; learning_rate=0.01, weight_decay=0.0, momentum=0.9
     "type": "adagrad",
     "alpha": 0.0316227766
   },
