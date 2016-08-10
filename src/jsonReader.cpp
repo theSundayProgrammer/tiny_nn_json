@@ -61,21 +61,60 @@ namespace theSundayProgrammer
   std::unique_ptr<tiny_cnn::optimizer> HandleAdagrad(Json::Value const& val)
   {
     double alpha = val.get("alpha", 0.03).asDouble();
-    std::unique_ptr<tiny_cnn::optimizer> optimiser = make_unique<tiny_cnn::adagrad>();
-    tiny_cnn::adagrad& opt = static_cast<tiny_cnn::adagrad&>(*optimiser);
-    opt.alpha = alpha;
-    return optimiser;
-  }
-  //todo: implement properly
-  std::unique_ptr<tiny_cnn::optimizer> HandleRMSprop(Json::Value const& val)
-  {
-    double alpha = val.get("alpha", 0.03).asDouble();
-    std::unique_ptr<tiny_cnn::optimizer> optimiser = make_unique<tiny_cnn::adagrad>();
-    tiny_cnn::adagrad& opt = static_cast<tiny_cnn::adagrad&>(*optimiser);
-    opt.alpha = alpha;
-    return optimiser;
+    auto ptr = make_unique<tiny_cnn::adagrad>();
+    ptr->alpha = alpha;
+    return ptr;
   }
 
+  std::unique_ptr<tiny_cnn::optimizer> HandleRMSProp(Json::Value const& val)
+  {
+    double alpha = val.get("alpha", 0.0001).asDouble();
+    double mu = val.get("mu", 0.99).asDouble();
+    auto ptr = make_unique<tiny_cnn::RMSprop>();
+    ptr->alpha = alpha;
+    ptr->mu = mu;
+    return ptr;
+  }
+
+
+  std::unique_ptr<tiny_cnn::optimizer> HandleAdam(Json::Value const& val)
+  {
+    tiny_cnn::float_t alpha_ = val.get("alpha", 0.001).asDouble();
+    tiny_cnn::float_t b1_ = val.get("decay_b1", 0.9).asDouble(); 
+    tiny_cnn::float_t b2_ = val.get("decay_b2", 0.999).asDouble(); 
+    tiny_cnn::float_t b1_t_ = val.get("b1_t", 0.9).asDouble();
+    tiny_cnn::float_t b2_t_ = val.get("b2_t", 0.999).asDouble();
+
+      auto ptr = make_unique<tiny_cnn::adam>();
+      ptr->alpha = alpha_;
+      ptr->b1 = b1_;
+      ptr->b2 = b2_;
+      ptr->b1_t = b1_t_;
+      ptr->b2_t = b2_t_;
+      return ptr;
+  }
+
+  std::unique_ptr<tiny_cnn::optimizer> HandleGradientdescent(Json::Value const& val)
+  {
+    double alpha = val.get("alpha", 0.01).asDouble();
+    double lambda = val.get("lambda", 0.0).asDouble();
+    auto ptr = make_unique<tiny_cnn::gradient_descent>();
+    ptr->alpha = alpha;
+    ptr->lambda = lambda;
+    return ptr;
+  }
+
+  std::unique_ptr<tiny_cnn::optimizer> HandleMomentum(Json::Value const& val)
+  {
+    double alpha = val.get("learning_rate", 0.01).asDouble();
+    double lambda = val.get("weight_decay", 0.0).asDouble();
+    double mu = val.get("momentum", 0.9).asDouble();
+    auto ptr = make_unique<tiny_cnn::momentum>();
+    ptr->alpha = alpha;
+    ptr->lambda = lambda;
+    ptr->mu = mu;
+    return ptr;
+  }
 
 
   ELayerTypes layer_supported(const std::string& type_)
@@ -222,16 +261,16 @@ namespace theSundayProgrammer
           return HandleAdagrad(optimizer_node);
           break;
         case ERMSprop:
-          throw not_implemented(opt_type);
+          return HandleRMSProp(optimizer_node);
           break;
         case Eadam:
-          throw not_implemented(opt_type);
+          throw HandleAdam(opt_type);
           break;
         case Emomentum:
           throw not_implemented(opt_type);
           break;
         case Egradient_descent:
-          throw not_implemented(opt_type);
+          return HandleGradientdescent(opt_type);
           break;
 
         }
